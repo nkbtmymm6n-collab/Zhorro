@@ -1,4 +1,3 @@
-import sqlite3
 from pathlib import Path
 from helpers.class_zhorro import zhorro
 from helpers.finder import finder
@@ -14,12 +13,15 @@ def main():
 
     paths=zhorro(paths)
     paths.scan()
+    print("FILES:", paths.files)
     paths.sort()
     paths.index()
-
+    print("NEW:", paths.new)
     indexator(paths.new)
-    files=finder(input("Input the word that you need to find: ").lower())
 
+    files, results=finder(input("Input the word that you need to find: ").lower())
+
+    print("Direct Search:")
     for file in files:
         suffix=Path(file["path"]).suffix
         print(f"Your word is in {file['filename']}")
@@ -42,12 +44,19 @@ def main():
             print("")
             print("")
 
-    db=sqlite3.connect("zhorro.db")
-    db.execute("DELETE FROM word_files")
-    db.execute("DELETE FROM words")
-    db.execute("DELETE FROM files")
-    db.commit()
-    db.close()
+    print("Semnatic Search:")
+    for result in results:
+        if result["suffix"]==".docx":
+            print(f"Paragraph {result['paragraph']}")
+
+
+        elif result["suffix"]==".pdf":
+            print(f"Page {result['page']}")
+
+        print(f"From line {result['start']} to line {result['end']}")
+        print("")
+        print(result['chunk'])
+
 
 
 if __name__=="__main__":

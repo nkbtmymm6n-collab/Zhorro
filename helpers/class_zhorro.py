@@ -32,9 +32,8 @@ class zhorro:
             else:
                 final.append(path)
 
-            self.files = final
-
-            return self.files
+        self.files = final
+        return self.files
 
     def sort(self):
 

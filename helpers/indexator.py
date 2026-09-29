@@ -7,10 +7,10 @@ def indexator(paths):
     db=sqlite3.connect("zhorro.db")
 
     for path in paths:
-        
         words=[]
         suffix=path.suffix.lower()
         file_id=db.execute("SELECT id FROM files WHERE path=?",(str(path),)).fetchone()[0]
+        
 
         if suffix==".txt":
         
@@ -37,7 +37,7 @@ def indexator(paths):
             for paragraph in doc.paragraphs:
                 text=paragraph.text
                 words.extend(text.split())
-        
+        print("WORDS LENGTH:", len(words))
         for word in words:
             word=word.lower()
             db.execute("INSERT OR IGNORE INTO words (word) VALUES (?)", (word,))
