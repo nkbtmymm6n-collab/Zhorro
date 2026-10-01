@@ -17,7 +17,9 @@ def indexator(paths):
             with open(path, "r", encoding="utf-8") as file:
                 text=file.read()
                 words.extend(text.split())
-            file.close()
+                length=len(words)
+                for i in range(length):
+                    words[i]=words[i].strip(".,!?;:()[]{}\"'«»—-")
 
         elif suffix==".pdf":
 
@@ -26,7 +28,10 @@ def indexator(paths):
             for page in doc:
                 text=page.get_text()
                 words.extend(text.split())
-                
+
+            length=len(words)
+            for i in range(length):
+                words[i]=words[i].strip(".,!?;:()[]{}\"'«»—-")
 
             doc.close()
 
@@ -37,8 +42,15 @@ def indexator(paths):
             for paragraph in doc.paragraphs:
                 text=paragraph.text
                 words.extend(text.split())
-        print("WORDS LENGTH:", len(words))
+
+            length=len(words)
+
+            for i in range(length):
+                words[i]=words[i].strip(".,!?;:()[]{}\"'«»—-")
+
         for word in words:
+            print("FIRST WORDS:", words[:30])
+            print("DATA EXISTS:", "данные" in words)
             word=word.lower()
             db.execute("INSERT OR IGNORE INTO words (word) VALUES (?)", (word,))
             word_id=db.execute("SELECT id FROM words WHERE word = ?", (word,)).fetchone()[0]
