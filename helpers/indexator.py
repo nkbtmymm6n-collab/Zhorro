@@ -49,8 +49,6 @@ def indexator(paths):
                 words[i]=words[i].strip(".,!?;:()[]{}\"'«»—-")
 
         for word in words:
-            print("FIRST WORDS:", words[:30])
-            print("DATA EXISTS:", "данные" in words)
             word=word.lower()
             db.execute("INSERT OR IGNORE INTO words (word) VALUES (?)", (word,))
             word_id=db.execute("SELECT id FROM words WHERE word = ?", (word,)).fetchone()[0]
@@ -59,6 +57,4 @@ def indexator(paths):
     db.commit()
     db.close()
             
-
-        
         

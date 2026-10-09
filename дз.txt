@@ -1,0 +1,27 @@
+from math import sqrt
+def calc():
+
+    delx=(float(input("What's the x-coordinate of the 2nd point? "))-float(input("What's the x-coordinate of the 1st point? ")))**2
+    dely=(float(input("What's the ordinate of the 2nd point? "))-float(input("What's the ordinate of the 1st point? ")))**2
+    distance=sqrt(delx+dely)
+    return distance
+
+
+import math
+def calc():
+
+    radius=float(input("What's the radius? "))
+    area=math.pi*radius**2
+    circumference=2*math.pi*radius
+    print(f"{area}, {circumference}")
+    return 0
+
+calc()
+
+import math
+def calc(x, t):
+
+    z=round((9*math.pi*t+10*math.cos(x))/(math.sqrt(t)-abs(math.sin(t))), 2)
+    return z
+
+print(calc(int(input("What's the value of x? ")), int(input("What's the value of t? "))))

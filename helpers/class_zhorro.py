@@ -70,9 +70,11 @@ class zhorro:
             
 
             elif row[1]!=file_hash:
-                db.execute("DELETE FROM word_files  WHERE file_id=?", (row[0],))             
+                db.execute("DELETE FROM word_files  WHERE file_id=?", (row[0],))
+                db.execute("DELETE FROM chunks WHERE file_id=?", (row[0],))             
                 db.execute("UPDATE files SET hash=? WHERE path=?", (file_hash, str(file)))
                 self.new.append(file)
+
         
         db.commit()
         db.close()
