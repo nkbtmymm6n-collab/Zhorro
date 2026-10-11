@@ -50,7 +50,7 @@ class zhorro:
         
         return self.txt, self.docx, self.pdf
 
-    def index(self):
+    def checker(self):
         self.new=[]
         db = sqlite3.connect("zhorro.db")
         for file in self.files:

@@ -1,5 +1,6 @@
 import sqlite3
 import pymupdf
+from pathlib import Path
 from docx import Document
 
 def indexator(paths):
@@ -7,6 +8,7 @@ def indexator(paths):
     db=sqlite3.connect("zhorro.db")
 
     for path in paths:
+        path=Path(path)
         words=[]
         suffix=path.suffix.lower()
         file_id=db.execute("SELECT id FROM files WHERE path=?",(str(path),)).fetchone()[0]
