@@ -24,6 +24,11 @@ class Backend(QObject):
         super().__init__()
         self.files=[]
         self.shows=[]
+        self.selected=[]
+
+    @Slot(str)
+    def search(self, query):
+        ...
     
     @Slot()
     def selectFiles(self):
@@ -31,10 +36,6 @@ class Backend(QObject):
 
         self.files.extend(files)
         self.filesChanged.emit(self.files)
-
-    @Slot(str)
-    def search(self, query):
-        founds, results=finder(query, model, paths, 10)
 
     @Slot(result=bool)
     def index(self):

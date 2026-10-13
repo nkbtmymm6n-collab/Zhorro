@@ -95,10 +95,11 @@ Rectangle {
             id: goButton
             width: 60
             height: 60
-            color: "#181818"
 
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
+
+            color: mouseArea.pressed ? "#141414" : mouseArea.containsMouse ? "#1A1A1A" : "#252525"
 
             Image {
                 anchors.centerIn: parent
@@ -108,8 +109,9 @@ Rectangle {
             }
 
             MouseArea {
+                id: mouseArea
                 anchors.fill: parent
-
+                hoverEnabled: true
                 onClicked: {
                     pageStack.push(Qt.resolvedUrl("IndexingPage.qml"))
                 }

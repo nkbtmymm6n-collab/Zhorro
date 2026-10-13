@@ -53,7 +53,7 @@ Rectangle {
             color: "#111111"
             }
 
-            onAccepted: searchButton.clicked()
+            onAccepted: fileDialog.open()
         }
 
         Button {
@@ -71,17 +71,52 @@ Rectangle {
             font.pixelSize: 20
 
             onClicked: {
-                backend.search(inputSearch.text)
+                fileDialog.open()
             }
         }
     }
 
-    Repeater {
-        model: results
+    Dialog {
+        id: fileDialog
+        width: 600
+        height: 500
 
-        Rectangle {
-            width: 710
-            color: "#111111"
+        background: Rectangle {
+        color: "#111111"
         }
+
+        Text {
+            id: srch
+            text: "Select files"
+
+            anchors.top: parent.top
+            anchors.topMargin: 20
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+
+            color: "#E0E0E0"
+            font.pixelSize: 32
+            font.weight: Font.DemiBold
+        }
+
+        Text {
+            id: exp
+            text: "Click on the files which ones you want to search in"
+            
+            anchors.left: srch.left
+            anchors.top: srch.bottom
+            anchors.topMargin: 10
+
+            color: "#666666"
+            font.pixelSize: 14
+        }
+        modal: true
+        Overlay.modal: Rectangle {
+            color: "#B0000000"
+        }
+        standardButtons: Dialog.Cancel | Dialog.Ok
+
+        x: (parent.width - width) / 2 - 140
+        y: (parent.height - height) / 2
     }
 }
