@@ -1,4 +1,5 @@
 import sys
+import os
 import sqlite3
 from pathlib import Path
 from helpers.class_zhorro import zhorro
@@ -17,10 +18,12 @@ model=SentenceTransformer("all-MiniLM-L6-v2")
 class Backend(QObject):
 
     filesChanged=Signal(list)
+    need2Show=Signal(list)
 
     def __init__(self):
         super().__init__()
         self.files=[]
+        self.shows=[]
     
     @Slot()
     def selectFiles(self):
@@ -56,7 +59,26 @@ class Backend(QObject):
         self.files.clear()
         self.filesChanged.emit(self.files)  
 
+    @Slot(str)
+    def erase(self, path):
+        db.execute("DELETE FROM embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE file_id = (SELECT id FROM files WHERE path = ?))", (path,))
+        db.execute("DELETE FROM chunks WHERE file_id = (SELECT id FROM files WHERE path = ?)", (path,))
+        db.execute("DELETE FROM word_files WHERE file_id = (SELECT id FROM files WHERE path = ?)", (path,))
+        db.execute("DELETE FROM files WHERE path = ?", (path,))
+        db.commit()
 
+    @Slot()
+    def show(self):
+        
+        db=sqlite3.connect("zhorro.db")
+        files=db.execute("SELECT path FROM files").fetchall()
+        files=[file[0] for file in files]
+        self.shows=files
+        self.need2Show.emit(self.shows)
+
+    @Slot(str)
+    def open(self, path):
+        os.startfile(path)
 
 
 

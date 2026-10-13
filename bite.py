@@ -1,7 +1,9 @@
 import sqlite3
-db=sqlite3.connect("zhorro.db")
-db.execute("")
+db = sqlite3.connect("zhorro.db")
 
+result = db.execute("SELECT sql FROM sqlite_master WHERE type = 'table'")
 
-db.commit()
+for row in result:
+    print(row[0])
+
 db.close()

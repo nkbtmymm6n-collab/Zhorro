@@ -11,6 +11,8 @@ Window {
     minimumWidth: 800
     minimumHeight: 550
 
+
+
     StackView {
         id: pages
 

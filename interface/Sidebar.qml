@@ -17,6 +17,18 @@ Rectangle {
         source: "fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf"
     }
 
+    Popup {
+    id: grumpy
+
+    width: 500
+    height: 670
+
+    Image {
+        anchors.fill: parent
+        source: "icons/grumpy.png"
+    }
+}
+
     Image {
         id: logo
 
@@ -30,6 +42,11 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 30
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: grumpy.open()
+        }
     }
 
     Column {
@@ -48,12 +65,17 @@ Rectangle {
             icon.source: Qt.resolvedUrl("icons/stack-overflow.svg")
             text: "Indexing"
 
-            onClicked: pageStack.replace(Qt.resolvedUrl("pages/IndexingPage.qml"))
+            onClicked: {
+                pageStack.push("pages/IndexingPage.qml")
+            }
         }
 
         SidebarButton {
             icon.source: Qt.resolvedUrl("icons/file-earmark.svg")
             text: "Files"
+            onClicked: {
+                pageStack.push("pages/FilesPage.qml", {"pageStack": pageStack})
+            }
         }
     }
 
