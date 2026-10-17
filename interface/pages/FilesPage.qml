@@ -152,7 +152,11 @@ Rectangle {
 
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 15
+                    anchors.leftMargin: 65
+
+                    MouseArea {
+                        onClicked: backend.open(modelData["path"])
+                    }
                 }
 
                 Text {
@@ -186,6 +190,29 @@ Rectangle {
                     anchors.left: parent.left
                     onClicked: {
                         backend.open(modelData)
+                    }
+                }
+
+                Image {
+                    id: tick
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: img.left
+                    anchors.rightMargin: 24
+
+                        source: backend.isSelected(modelData)
+                            ? "../icons/checkbox_checked_sharp.svg"
+                            : "../icons/checkbox_unchecked_sharp.svg"
+
+                    z: 2
+
+                    MouseArea {
+                        anchors.fill: parent
+
+                        onClicked: {
+                            tick.source = backend.manager(modelData)
+                                ? "../icons/checkbox_checked_sharp.svg"
+                                : "../icons/checkbox_unchecked_sharp.svg"
+                        }
                     }
                 }
 

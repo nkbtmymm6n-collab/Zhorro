@@ -13,6 +13,16 @@ Rectangle {
         function onFilesChanged(files) {
             selectedFiles=files
         }
+
+        function onIndexFinished(success) {
+            if (success) {
+                successMessage.visible=true
+            } else {
+                failureMessage.visible=true
+            }
+
+            messageTimer.restart()
+        }
 }
     
     Text {
@@ -188,14 +198,10 @@ Rectangle {
             font.pixelSize: 20
 
             onClicked: {
-                var success = backend.index()
+                backend.index()
                 addButton.visible=false
                 indexButton.visible=false
-                if (success) {successMessage.visible=true}
-                else {failureMessage.visible=true}
-                backend.clearFiles()
-                messageTimer.restart()
-                
+                backend.clearFiles()  
             }
         }
 

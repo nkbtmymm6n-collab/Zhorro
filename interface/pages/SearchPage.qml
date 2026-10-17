@@ -1,9 +1,16 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Basic
+import "../designs"
 
 Rectangle {
     color: "#090909"
+
+    Connections {
+        target: backend
+    }
+
+
     
     Text {
         id: title
@@ -31,7 +38,45 @@ Rectangle {
         anchors.topMargin: 6
     }
 
+    Button {
+        id: resetButton
+
+        width: 100
+        height: 50
+        anchors.top: title.top
+        anchors.right: searchRow.right
+        visible: backend.exactResults.length > 0 || backend.semanticResults.length > 0
+
+        text: "Reset"
+
+        font.pixelSize: 16
+        font.weight: Font.Medium
+
+        background: Rectangle {
+
+            color: resetButton.pressed
+                ? "#5C0A10"
+                : resetButton.hovered
+                    ? "#8B101A"
+                    : "#3A0D11"
+        }
+
+        contentItem: Text {
+            text: resetButton.text
+            color: "#E0E0E0"
+            font: resetButton.font
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        onClicked: {
+            backend.reset()
+            amountText.visible=false
+        }
+    }
+
     Row {
+        id: searchRow
         spacing: 10
         anchors.top: description.bottom
         anchors.left: parent.left
@@ -52,8 +97,6 @@ Rectangle {
             background: Rectangle {
             color: "#111111"
             }
-
-            onAccepted: fileDialog.open()
         }
 
         Button {
@@ -68,55 +111,312 @@ Rectangle {
 
             text: "Search"
             font.weight: Font.Medium
-            font.pixelSize: 20
+            font.pixelSize: 19
 
             onClicked: {
-                fileDialog.open()
+                resultsDialog.open()
             }
         }
     }
 
     Dialog {
-        id: fileDialog
-        width: 600
-        height: 500
+        id: resultsDialog
+
+        width: 420
+        height: 300
+
+        modal: true
+        anchors.centerIn: Overlay.overlay
+
+        padding: 0
 
         background: Rectangle {
-        color: "#111111"
+            color: "#111111"
+            border.width: 1
+            border.color: "#252525"
         }
 
         Text {
-            id: srch
-            text: "Select files"
+            id: res
 
-            anchors.top: parent.top
-            anchors.topMargin: 20
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-
+            text: "How many results?"
             color: "#E0E0E0"
-            font.pixelSize: 32
+            font.pixelSize: 22
             font.weight: Font.DemiBold
+
+            anchors {
+                top: parent.top
+                topMargin: 24
+                left: parent.left
+                leftMargin: 28
+            }
         }
 
         Text {
-            id: exp
-            text: "Click on the files which ones you want to search in"
-            
-            anchors.left: srch.left
-            anchors.top: srch.bottom
-            anchors.topMargin: 10
+            id: choo
 
+            text: "Choose how many results to show for each file"
             color: "#666666"
-            font.pixelSize: 14
-        }
-        modal: true
-        Overlay.modal: Rectangle {
-            color: "#B0000000"
-        }
-        standardButtons: Dialog.Cancel | Dialog.Ok
+            font.pixelSize: 13
 
-        x: (parent.width - width) / 2 - 140
-        y: (parent.height - height) / 2
+            anchors {
+                left: res.left
+                top: res.bottom
+                topMargin: 8
+            }
+        }
+
+        Row {
+            id: amountRow
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 10
+            spacing: 14
+
+            Rectangle {
+                id: decreaseButton
+
+                width: 54
+                height: 54
+
+                color: mouseDecrease.containsMouse
+                    ? "#242424"
+                    : "#1A1A1A"
+
+                border.width: 1
+                border.color: "#292929"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+
+                    text: "−"
+                    color: "#E0E0E0"
+
+                    font.family: "Inter"
+                    font.pixelSize: 28
+
+                    MouseArea {
+                        id: mouseDecrease
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+
+                        onClicked: {
+                            backend.count(0)
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                width: 70
+                height: 54
+
+                color: "#181818"
+
+                border.width: 1
+                border.color: "#292929"
+
+                Text {
+                    anchors.centerIn: parent
+
+                    text: backend.counter
+                    color: "#E0E0E0"
+
+                    font.family: "Inter"
+                    font.pixelSize: 21
+                    font.weight: Font.Medium
+                }
+            }
+
+            Rectangle {
+                id: increaseButton
+
+                width: 54
+                height: 54
+
+                color: mouseIncrease.containsMouse ? "#6F0C14" : "#8B101A"
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 120
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+
+                    text: "+"
+                    font.pixelSize: 28
+
+                    MouseArea {
+                        id: mouseIncrease
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+
+                        onClicked: {
+                            backend.count(1)
+                        }
+                    }
+                }
+            }
+        }
+
+        Text {
+            id: advice
+            anchors.top: amountRow.bottom
+            anchors.topMargin: 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "(remain 0 for all)"
+            color: "#666666"
+            font.pixelSize: 13
+        }
+
+        Text {
+            id: cancelButton
+
+            text: "Cancel"
+
+            color: cancelMouse.containsMouse
+                ? "#E0E0E0"
+                : "#777777"
+
+            font.family: "Inter"
+            font.pixelSize: 14
+            font.weight: Font.Medium
+
+            anchors {
+                bottom: parent.bottom
+                bottomMargin: 22
+                left: parent.left
+                leftMargin: 28
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
+
+            MouseArea {
+                id: cancelMouse
+
+                anchors.fill: parent
+                hoverEnabled: true
+
+                onClicked: {
+                    resultsDialog.reject()
+                }
+            }
+        }
+
+        Rectangle {
+            id: okButton
+
+            width: 90
+            height: 38
+            color: okMouse.containsMouse ? "#6F0C14" : "#8B101A"
+
+            anchors {
+                bottom: parent.bottom
+                bottomMargin: 18
+                right: parent.right
+                rightMargin: 24
+            }
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+
+                text: "Search"
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+            }
+
+            MouseArea {
+                id: okMouse
+
+                anchors.fill: parent
+                hoverEnabled: true
+
+                onClicked: {
+                    resultsDialog.accept()
+                }
+            }
+        }
+
+        onAccepted: {
+            backend.search(inputSearch.text)
+            amountText.visible=true
+        }
+    }
+
+    Text {
+        id: amountText
+        visible: resultsColumn.height>0
+
+        anchors {
+            left: searchRow.left
+            top: searchRow.bottom
+            topMargin: 25
+        }
+
+        font.pixelSize: 30
+        font.weight: Font.DemiBold
+        text: backend.fileCounter > 1
+            ? `${backend.resultsCounter} matches · ${backend.fileCounter} files`
+            : backend.fileCounter === 1
+            ? `${backend.resultsCounter} matches · ${backend.fileCounter} file`
+            : backend.selected.length === 0 
+            ? "No files are selected. Select them at the Files page.":
+            "No matches found"
+        color: "#CFCFCF"
+    }
+
+    ScrollView {
+        id: resultsScroll
+
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: amountText.bottom
+            bottom: parent.bottom
+            topMargin: 15
+        }
+
+        clip: true
+
+        Column {
+            id: resultsColumn
+            width: resultsScroll.availableWidth - 80
+            x: 40
+            spacing: 12
+
+
+           Repeater {
+                model: backend.results
+
+                delegate: ResultCard {
+                    width: resultsColumn.width
+
+                    filename: modelData.filename
+                    path: modelData.path
+
+                    contexts: modelData.exact
+                    semanticResults: modelData.semantic
+                }
+            }
+        }
     }
 }

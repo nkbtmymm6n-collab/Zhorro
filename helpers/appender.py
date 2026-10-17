@@ -10,11 +10,12 @@ def jaccard_similarity(a, b):
 
     return len(a&b)/len(a|b)
 
-def appender(text, file, word, positions, model, go, in_need, limit):
+def appender(text, file, word, positions, model, go, limit):
     db=sqlite3.connect("zhorro.db")
     id=db.execute("SELECT id FROM files WHERE path=?", (str(file["path"]),)).fetchone()[0]
     suffix=Path(file["path"]).suffix
     results=[]
+    list_of_results=[]
     line_number=0
 
     if go:
@@ -58,102 +59,18 @@ def appender(text, file, word, positions, model, go, in_need, limit):
                         elif suffix==".pdf":
                             file["contexts"].append({"page": position["page"]+1, "line_number": line_number, "amount": counter, "previous": previous, "current": lines[i].lower().replace(word, new), "upcoming": upcoming})  
                     
-
-    sentences=re.split(r'(?<=[.!?,;:—])', text)
-    amount=len(sentences)
-    chunks=[]
-    j=0
-    subchunk=""
-    length=0
-
-    for i in range(amount):
-            length+=len(sentences[i].split())
-
-    while True:
-                
-            while j<amount and len(subchunk.split())<50:
-                subchunk+=sentences[j]
-                j+=1 
-                if len(subchunk.split())>=50:
-                    break
-                        
-            chunks.append(subchunk)
-            subchunk=""
-            if j==amount:
-                break
-
-    length=len(chunks)
-
-    if file["path"] in in_need:
-        vectors=model.encode(chunks, batch_size=128)
-        for i in range(length):
-            cursor=db.execute("INSERT INTO chunks (file_id, text) VALUES (?,?)", (id, chunks[i]))
-            chunk_id=cursor.lastrowid
-            db.execute("INSERT INTO embeddings (chunk_id, embedding) VALUES (?,?)",(chunk_id, vectors[i].tobytes()))
-        db.commit()
-
-    else:
-        rows=db.execute("SELECT embeddings.embedding FROM embeddings JOIN chunks ON chunks.id=embeddings.chunk_id WHERE chunks.file_id=?", (id,)).fetchall()
-        vectors=[np.frombuffer(row[0], dtype=np.float32) for row in rows]
-
     query=model.encode(word)
-    similarities = model.similarity(query, vectors)[0]
-    remaining=text
-    offset=0
-            
-    for i in range(length):
-            
-        leng=len(results)
-        counter=0
-        match=re.search(re.escape(chunks[i]), remaining)
-        start=None
-        end=None
-        position=None
-        if match:
-                
-            starting=offset+match.start()
-            ending=offset+match.end()
+    rows=db.execute("SELECT chunks.text, chunks.start_line, chunks.end_line, chunks.page, chunks.paragraph, embeddings.embedding FROM chunks JOIN embeddings ON chunks.id = embeddings.chunk_id WHERE chunks.file_id = ?", (id,)).fetchall()
+    vectors=[np.frombuffer(row[5], dtype=np.float32) for row in rows]
+    similarities=model.similarity(query, vectors)[0]
+    indexes=np.argsort(similarities.numpy())[::-1]
 
-            before=text[:starting]
-            after=text[:ending]
+    if limit!=0:
+        indexes=indexes[:limit]
 
-            start=before.count("\n")+1
-            end=after.count("\n")+1
+    for i in indexes:
+        results.append({"path": file["path"], "chunk": rows[i][0], "start": rows[i][1], "end": rows[i][2], "page": rows[i][3], "paragraph": rows[i][4], "similarity": round(similarities[i].item(), 3)})
 
-            remaining=remaining[match.end():]
-
-            offset+=match.end()
-            position = None
-
-            for pos in positions:
-
-                if pos["start"] <= starting < pos["end"]:
-                    position=pos
-                    break
-
-        for j in range(leng):
-            if jaccard_similarity(results[j]["chunk"], chunks[i])>=0.75:
-                counter+=1
-        if counter==0:
-            if limit!=0:
-                if len(results)<limit:
-                    if suffix==".txt":
-                        results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": None, "page": None, "suffix": suffix})
-
-                    elif suffix==".docx":            
-                        results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": position['paragraph']+1, "page": None, "suffix": suffix})
-
-                    elif suffix==".pdf":
-                        results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": None, "page": position['page']+1, "suffix": suffix})
-
-            else:
-                if suffix==".txt":
-                    results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": None, "page": None, "suffix": suffix})
-
-                elif suffix==".docx":            
-                    results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": position['paragraph']+1, "page": None, "suffix": suffix})
-
-                elif suffix==".pdf":
-                    results.append({"chunk": chunks[i], "name": file["filename"], "start": start, "end": end, "similarity": round(similarities[i].item(), 3), "paragraph": None, "page": position['page']+1, "suffix": suffix})    
-
-    return results
+    list_of_results.append(results)
+    db.close()
+    return list_of_results
