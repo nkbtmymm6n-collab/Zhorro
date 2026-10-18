@@ -41,6 +41,14 @@ Rectangle {
                         : card.extension === ".docx"
                         ? Qt.resolvedUrl("../icons/filetype-docx copy.svg")
                         : Qt.resolvedUrl("../icons/filetype-txt copy.svg")
+
+            MouseArea {
+                anchors.fill: parent
+
+                onClicked: {
+                    backend.open(card.path)
+                }
+            }
             
         }
 
@@ -138,9 +146,9 @@ Rectangle {
                         spacing: 4
 
                         Text {
-                            text: modelData.page !== undefined
+                            text: (modelData.page !== undefined && card.extension == ".pdf")
                                   ? `Page ${modelData.page}`
-                                  : modelData.paragraph !== undefined
+                                  : (modelData.paragraph !== undefined && card.extension == ".docx")
                                     ? `Paragraph ${modelData.paragraph}`
                                     : `Line ${modelData.line_number}`
 
@@ -209,7 +217,7 @@ Rectangle {
                         spacing: 6
 
                         Text {
-                            text: modelData.page !== null
+                            text: (modelData.page !== null && card.extension == ".pdf")
                                   ? `Page ${modelData.page} · Lines ${modelData.start}–${modelData.end}`
                                   : `Lines ${modelData.start}–${modelData.end}`
 

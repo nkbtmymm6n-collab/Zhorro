@@ -26,6 +26,7 @@ model=SentenceTransformer("all-MiniLM-L6-v2", device="cuda")
 splash.close()
 
 class IndexWorker(QObject):
+    searchFinished=Signal(list, list)
     finished=Signal(bool)
 
     def __init__(self, files):
@@ -48,6 +49,14 @@ class IndexWorker(QObject):
             print("INDEX ERROR:", repr(e))
             self.finished.emit(False)
 
+    @Slot(str, int, list)
+    def search(self, query, limit, selected):
+        try:
+            exact, semantic=finder(query, model, limit, selected)
+            self.searchFinished.emit(exact, semantic)
+        except Exception as e:
+            print("SEARCH ERROR:", repr(e))
+
 class Backend(QObject):
 
     filesChanged=Signal(list)
@@ -61,6 +70,7 @@ class Backend(QObject):
     resultsCounterChanged=Signal(int)
     resultsChanged=Signal(list)
     indexFinished=Signal(bool)
+    searchFinished=Signal(list, list)
 
     def __init__(self):
         super().__init__()
@@ -131,29 +141,37 @@ class Backend(QObject):
 
     @Slot(str)
     def search(self, query):
-        self._exactResults, self._semanticResults=finder(query, model, self._counter, self._selected)
-        self.exactResultsChanged.emit(self._exactResults)
-        self.semanticResultsChanged.emit(self._semanticResults)
-        self._filesCounter=0
-        self._resultsCounter=0
+
+        self.thread=QThread()
+        self.worker=IndexWorker([])
+
+        self.worker.moveToThread(self.thread)
+
+        self.thread.started.connect(lambda: self.worker.search(query, self._counter, self._selected.copy()))
+
+        self.worker.searchFinished.connect(self.searchFinishedSlot)
+
+        self.worker.searchFinished.connect(self.thread.quit)
+        self.worker.searchFinished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+        self.thread.start()
+
+    @Slot(list, list)
+    def searchFinishedSlot(self, exact, semantic):
+
+        self._exactResults=exact
+        self._semanticResults=semantic
+
         self._results=[]
-        total=[] 
 
-        for file in self._exactResults:
-            total.append(file["path"])
-            self._filesCounter+=1
-            self._resultsCounter+=len(file["contexts"])
-        
-        for file in self._semanticResults:
-            if file and file[0]["path"] not in total:
-                total.append(file[0]["path"])
-                self._filesCounter+=1
-            self._resultsCounter+=len(file)
+        for exact_file in self._exactResults:
 
-        for exact in self._exactResults:
-            self._results.append({"path": exact["path"], "filename": exact["filename"], "exact": exact["contexts"], "semantic": []})
+            self._results.append({"path": exact_file["path"], "filename": exact_file["filename"],"exact": exact_file["contexts"], "semantic": []})
+                
 
         for semantic_group in self._semanticResults:
+
             if not semantic_group:
                 continue
 
@@ -162,15 +180,27 @@ class Backend(QObject):
             found=False
 
             for result in self._results:
+
                 if result["path"]==path:
+
                     result["semantic"]=semantic_group
                     found=True
                     break
 
             if not found:
-                self._results.append({"path": path, "filename": semantic_group[0]["filename"], "exact": [], "semantic": semantic_group})
-                    
 
+                self._results.append({"path": path, "filename": semantic_group[0]["filename"], "exact": [], "semantic": semantic_group})
+
+        self._filesCounter=len(self._results)
+
+        self._resultsCounter=0
+
+        for file in self._results:
+            self._resultsCounter+=len(file["exact"])
+            self._resultsCounter+=len(file["semantic"])
+
+        self.exactResultsChanged.emit(self._exactResults)
+        self.semanticResultsChanged.emit(self._semanticResults)
         self.filesCounterChanged.emit(self._filesCounter)
         self.resultsCounterChanged.emit(self._resultsCounter)
         self.resultsChanged.emit(self._results)
@@ -197,11 +227,7 @@ class Backend(QObject):
     def selectFiles(self):
         files, _ = QFileDialog.getOpenFileNames(None, "Select files", "", "Documents (*.txt *.docx *.pdf)")
 
-        print("SELECTED:", files)
-
         self.files.extend(files)
-
-        print("BACKEND FILES:", self.files)
 
         self.filesChanged.emit(self.files)
 

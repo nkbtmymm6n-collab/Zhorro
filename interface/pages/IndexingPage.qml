@@ -4,6 +4,10 @@ import QtQuick.Controls.Basic
 
 Rectangle {
     color: "#090909"
+    FontLoader {
+        id: nunito
+        source: "../fonts/NunitoSans-Italic-VariableFont_YTLC,opsz,wdth,wght.ttf"
+    }
 
     property var selectedFiles: []
 
@@ -15,8 +19,10 @@ Rectangle {
         }
 
         function onIndexFinished(success) {
+            progressOverlay.visible=false
             if (success) {
                 successMessage.visible=true
+                
             } else {
                 failureMessage.visible=true
             }
@@ -63,20 +69,50 @@ Rectangle {
         height: 250
 
         Rectangle {
+            id: progressOverlay
+
+            visible: false
+            anchors.fill: parent
+            color: "#111111"
+            z: 100
+
+            Text {
+                anchors.centerIn: parent
+
+                text: "Work in progress..."
+                color: "#666666"
+                font.family: nunito.name
+                font.weight: Font.Light
+                font.pixelSize: 28
+            }
+        }
+
+        Rectangle {
             id: failureMessage
             visible: false
             color: "#111111"
             anchors.fill: parent
             z: 10
 
+            Image {
+                source:"../icons/hand-thumbs-down.svg"
+                anchors.centerIn: parent
+                anchors.horizontalCenterOffset: 50
+                anchors.verticalCenterOffset: -2
+            }
+
             Text {
-                text: "Indexation was unsuccessful due to an unknown error. Try again."
+                id: failureText
+                text: "Failure"
                 color: "#FF1744"
                 font.pixelSize: 25
+                font.family: nunito.name
+                font.weight: Font.Normal
                 width: parent.width - 40
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: -10
             }
         }
 
@@ -87,14 +123,25 @@ Rectangle {
             anchors.fill: parent
             z: 10
 
+            Image {
+                source:"../icons/hand-thumbs-up.svg"
+                anchors.centerIn: parent
+                anchors.horizontalCenterOffset: 50
+                anchors.verticalCenterOffset: -2
+            }
+
             Text {
-                text: "Files were indexed successfully. Yay."
+                id: successText
+                text: "Success"
                 color: "#00E676"
                 font.pixelSize: 25
+                font.family: nunito.name
+                font.weight: Font.Normal
                 width: parent.width - 40
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: -10
             }
         }
         
@@ -198,6 +245,7 @@ Rectangle {
             font.pixelSize: 20
 
             onClicked: {
+                progressOverlay.visible = true
                 backend.index()
                 addButton.visible=false
                 indexButton.visible=false
