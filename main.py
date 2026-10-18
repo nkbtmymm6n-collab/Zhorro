@@ -1,5 +1,6 @@
 import sys
 import os
+import torch
 import sqlite3
 from pathlib import Path
 from helpers.class_zhorro import zhorro
@@ -22,7 +23,8 @@ if not splash_engine.rootObjects():
 
 splash=splash_engine.rootObjects()[0]
 app.processEvents()
-model=SentenceTransformer("all-MiniLM-L6-v2", device="cuda")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model=SentenceTransformer("all-MiniLM-L6-v2", device=device)
 splash.close()
 
 class IndexWorker(QObject):
